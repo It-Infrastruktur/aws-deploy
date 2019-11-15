@@ -1,6 +1,6 @@
 
 const Alexa = require('ask-sdk-core');
-const Jenkins = const jenkins = require('jenkins')({ baseUrl: 'http://user:bitnami@3.90.8.63:80/jenkins', crumbIssuer: true });
+const Jenkins = require('jenkins')({ baseUrl: 'http://user:bitnami@3.90.8.63:80/jenkins', crumbIssuer: true });
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 
 const LaunchRequestHandler = {
