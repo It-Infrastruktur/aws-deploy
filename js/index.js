@@ -1,6 +1,6 @@
 
 const Alexa = require('ask-sdk-core');
-//const Jenkins = const jenkins = require('jenkins')({ baseUrl: 'http://user:bitnami@3.90.8.63:80/jenkins', crumbIssuer: true });
+const Jenkins = const jenkins = require('jenkins')({ baseUrl: 'http://user:bitnami@3.90.8.63:80/jenkins', crumbIssuer: true });
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 
 const LaunchRequestHandler = {
@@ -37,7 +37,18 @@ const deployHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'deploy';
     },
     async handle(handlerInput) {     
-        const projectName = handlerInput.requestEnvelope.request.intent.slots.project.value   
+        const projectName = handlerInput.requestEnvelope.request.intent.slots.project.value
+        const deployNo = null
+        if( projectName.includes( ' minus ' )){
+            projectName = projectName.split( ' minus ' )
+            projectName = projectName.join( '-' )
+        }
+
+        await jenkins.job.build( projectName, function( err, data ){
+            if (err) console.log( 'err', err );
+            deployNo = data
+        })
+
         const speakOutput = `Ok, i will deploy the project ${projectName}.`;
         const repromtOutput = `If you want to get the status of the build, say status ${projectName}. Or let me deploy another project for you.`
        // const successMsg = `Thank you for waiting. The project ${projectName} was successfully deployed.`
