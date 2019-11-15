@@ -1,5 +1,6 @@
 
 const Alexa = require('ask-sdk-core');
+//const Jenkins = const jenkins = require('jenkins')({ baseUrl: 'http://user:bitnami@3.90.8.63:80/jenkins', crumbIssuer: true });
 //const persistenceAdapter = require('ask-sdk-s3-persistence-adapter');
 
 const LaunchRequestHandler = {
@@ -8,7 +9,7 @@ const LaunchRequestHandler = {
     },
     handle(handlerInput) {
         const speakOutput = 'Hello! I am your Deployment Helper. How can I help you?';
-        const repromptText = 'Should I deploy something for you?'; 
+        const repromptText = 'You can ask me to deploy a project or give you the status of a build. Just say deploy or build and give me the job name'; 
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptText)
@@ -16,7 +17,7 @@ const LaunchRequestHandler = {
     }
 };
 
-const handler1 = {
+/*const handler1 = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'IntentName';
@@ -28,7 +29,25 @@ const handler1 = {
             //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
             .getResponse();
     }
-};
+};*/
+
+const deployHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'deploy';
+    },
+    async handle(handlerInput) {     
+        const projectName = handlerInput.requestEnvelope.request.intent.slots.project.value   
+        const speakOutput = `Ok, i will deploy the project ${projectName}.`;
+        const repromtOutput = `If you want to get the status of the build, say status ${projectName}. Or let me deploy another project for you.`
+       // const successMsg = `Thank you for waiting. The project ${projectName} was successfully deployed.`
+       // const failMsg = `Sorry. The project ${projectName} failed. Please check your settings in your jenkins log for more details.` 
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(repromtOutput)
+            .getResponse();
+    }
+}
 /*
 const HelpIntentHandler = {
     canHandle(handlerInput) {
