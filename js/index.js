@@ -112,7 +112,7 @@ exports.handler = Alexa.SkillBuilders.custom()
     )*/
     .addRequestHandlers(
         LaunchRequestHandler,
-        handler1,
+        deployHandler,
         
     )
     .addErrorHandlers(
