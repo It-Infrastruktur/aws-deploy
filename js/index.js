@@ -37,14 +37,14 @@ const deployHandler = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'deploy';
     },
     async handle(handlerInput) {     
-        const projectName = handlerInput.requestEnvelope.request.intent.slots.project.value
-        const deployNo = null
+        let projectName = handlerInput.requestEnvelope.request.intent.slots.project.value
+        let deployNo = null
         if( projectName.includes( ' minus ' )){
             projectName = projectName.split( ' minus ' )
             projectName = projectName.join( '-' )
         }
 
-        await jenkins.job.build( projectName, function( err, data ){
+        await Jenkins.job.build( projectName, function( err, data ){
             if (err) console.log( 'err', err );
             deployNo = data
         })
