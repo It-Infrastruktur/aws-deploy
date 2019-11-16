@@ -39,17 +39,23 @@ const deployHandler = {
     async handle(handlerInput) {     
         let projectName = handlerInput.requestEnvelope.request.intent.slots.project.value
         let deployNo = null
-        if( projectName.includes( ' minus ' )){
-            projectName = projectName.split( ' minus ' )
-            projectName = projectName.join( '-' )
+        let speakOutput = null
+
+        projectName = await replaceMinus( projectName )
+
+        if( Jenkins.job.exists( projectName ) ){
+            await Jenkins.job.build( projectName, function( err, data ){
+                if (err) speakOutput = `Sorry, an error occured while deploying the project ${projectName}.`;
+                deployNo = data
+                speakOutput = `Ok, i have deployed the project ${projectName}. The build number is ${deployNo}.`;
+            })
+            
+        }else{
+            speakOutput = `Sorry, there is no job with the name ${projectName}. Please try again or check your jenkins logs.` 
         }
+        
 
-        await Jenkins.job.build( projectName, function( err, data ){
-            if (err) console.log( 'err', err );
-            deployNo = data
-        })
-
-        const speakOutput = `Ok, i will deploy the project ${projectName}.`;
+        
         const repromtOutput = `If you want to get the status of the build, say status ${projectName}. Or let me deploy another project for you.`
        // const successMsg = `Thank you for waiting. The project ${projectName} was successfully deployed.`
        // const failMsg = `Sorry. The project ${projectName} failed. Please check your settings in your jenkins log for more details.` 
@@ -59,6 +65,36 @@ const deployHandler = {
             .getResponse();
     }
 }
+
+const getLastBuildStatus = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'lastBuildStatus';
+    },
+    async handle(handlerInput) {
+        let projectName = handlerInput.requestEnvelope.request.intent.slots.project.value        
+        let speakOutput = null;
+
+        if( Jenkins.job.exists( projectName )){
+            await Jenkins.job.get( projectName, function(err, data) {
+                if (err) speakOutput = `Sorry, an error occured while asking for the Status of the project ${projectName}.`;
+                if( data.lastBuild.number == data.lastSuccessfulBuild.number ){
+                  speakOutput = `Your last build was successful for project ${projectName}`;  
+                }else{
+                    speakOutput = `The last build of this project wasn't successfull. The last successfull build of your project was ${data.lastSuccessfulBuild.number}. `
+                }
+                
+            }); 
+        }
+        
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+            .getResponse();
+    }
+};
+
 /*
 const HelpIntentHandler = {
     canHandle(handlerInput) {
@@ -113,6 +149,20 @@ const ErrorHandler = {
     }
 };
 
+/*
+Helpers
+*/
+
+const replaceMinus( p_sProjectName ){
+    let projectName = p_sProjectName
+
+    if( projectName.includes( ' minus ' )){
+            projectName = projectName.split( ' minus ' )
+            projectName = projectName.join( '-' )
+    }
+
+    return projectName;
+}
 
 // The SkillBuilder acts as the entry point for your skill, routing all request and response
 // payloads to the handlers above. Make sure any new handlers or interceptors you've
