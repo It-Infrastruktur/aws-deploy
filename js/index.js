@@ -38,24 +38,11 @@ const deployHandler = {
     },
     async handle(handlerInput) {     
         let projectName = handlerInput.requestEnvelope.request.intent.slots.project.value
-        let deployNo = null
-        let speakOutput = null
-
         projectName = await replaceMinus( projectName )
-
-        if( Jenkins.job.exists( projectName ) ){
-            await Jenkins.job.build( projectName, function( err, data ){
-                if (err) speakOutput = `Sorry, an error occured while deploying the project ${projectName}.`;
-                deployNo = data
-                speakOutput = `Ok, i have deployed the project ${projectName}. The build number is ${deployNo}.`;
-            })
-            
-        }else{
-            speakOutput = `Sorry, there is no job with the name ${projectName}. Please try again or check your jenkins logs.` 
-        }
         
-
+        let speakOutput = await deployHandlerHelper( projectName )
         
+        console.log( speakOutput )
         const repromtOutput = `If you want to get the status of the build, say status ${projectName}. Or let me deploy another project for you.`
        // const successMsg = `Thank you for waiting. The project ${projectName} was successfully deployed.`
        // const failMsg = `Sorry. The project ${projectName} failed. Please check your settings in your jenkins log for more details.` 
@@ -72,20 +59,9 @@ const getLastBuildStatus = {
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'lastBuildStatus';
     },
     async handle(handlerInput) {
-        let projectName = handlerInput.requestEnvelope.request.intent.slots.project.value        
-        let speakOutput = null;
-
-        if( Jenkins.job.exists( projectName )){
-            await Jenkins.job.get( projectName, function(err, data) {
-                if (err) speakOutput = `Sorry, an error occured while asking for the Status of the project ${projectName}.`;
-                if( data.lastBuild.number == data.lastSuccessfulBuild.number ){
-                  speakOutput = `Your last build was successful for project ${projectName}`;  
-                }else{
-                    speakOutput = `The last build of this project wasn't successfull. The last successfull build of your project was ${data.lastSuccessfulBuild.number}. `
-                }
-                
-            }); 
-        }
+        let projectName = handlerInput.requestEnvelope.request.intent.slots.project.value    
+        let projectName = await replaceMinus( projectName )    
+        let speakOutput = await statusUpdateHelper( projectName );
         
 
         return handlerInput.responseBuilder
@@ -153,7 +129,59 @@ const ErrorHandler = {
 Helpers
 */
 
-const replaceMinus( p_sProjectName ){
+const deployHandlerHelper = ( p_sProjectName ) => {
+    let projectName = p_sProjectName
+    let speakOutput = null
+    let deployNo = null
+    
+    return new Promise((resolve, reject) => {
+        Jenkins.job.exists( p_sProjectName, (err, exists) => {
+            if( exists ){
+                Jenkins.job.build( projectName, function( err, data ){
+                    if (err) speakOutput = `Sorry, an error occured while deploying the project ${projectName}.`;
+                    deployNo = data
+                    speakOutput = `Ok, i have deployed the project ${projectName}. The build number is ${deployNo}.`;
+                    resolve(speakOutput)
+
+                })
+            }else{
+                speakOutput = `Sorry, i couldn't find the project ${projectName}.`
+                resolve(speakOutput) 
+
+            }
+        })
+    })
+        
+}
+
+const statusUpdateHelper = ( p_sProjectName ) => {
+    let projectName = p_sProjectName
+    let speakOutput = null
+    let deployNo = null
+
+    return new Promise((resolve, reject) => {
+        Jenkins.job.exists( p_sProjectName, (err, exists) => {
+            if( exists ){
+                Jenkins.job.get( projectName, function(err, data) {
+                    if (err) speakOutput = `Sorry, an error occured while asking for the Status of the project ${projectName}.`;
+                    
+                    if( data.lastBuild.number == data.lastSuccessfulBuild.number ){
+                        speakOutput = `Your last build was successful for project ${projectName}`;  
+                    }else{
+                        speakOutput = `The last build of this project wasn't successfull. The last successfull build of your project was ${data.lastSuccessfulBuild.number}. `
+                    }
+                    resolve(speakOutput)
+                });
+            }else{
+                speakOutput = `Sorry, i couldn't find the project ${projectName}.`
+                resolve(speakOutput) 
+
+            }
+        })
+    })
+}
+
+const replaceMinus = async ( p_sProjectName ) => {
     let projectName = p_sProjectName
 
     if( projectName.includes( ' minus ' )){
