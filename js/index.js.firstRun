@@ -8,8 +8,8 @@ const LaunchRequestHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
     handle(handlerInput) {
-        const speakOutput = 'Hello! I am your Deployment Helper. How can I help you?';
-        const repromptText = 'You can ask me to deploy a project or give you the status of a build. Just say deploy or build and give me the job name'; 
+        const speakOutput = `Hello. I'm the Deployment Helper. I think you ought to know I am feeling very depressed. What problem do I have to solve for you now?`;
+        const repromptText = `Pardon me for breathing, which I never do anyway so I don't know why I bother to say it, Oh God, I'm so depressed.`; 
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptText)
@@ -42,8 +42,7 @@ const deployHandler = {
         
         let speakOutput = await deployHandlerHelper( projectName )
         
-        console.log( speakOutput )
-        const repromtOutput = `If you want to get the status of the build, say status ${projectName}. Or let me deploy another project for you.`
+        const repromtOutput = ``
        // const successMsg = `Thank you for waiting. The project ${projectName} was successfully deployed.`
        // const failMsg = `Sorry. The project ${projectName} failed. Please check your settings in your jenkins log for more details.` 
         return handlerInput.responseBuilder
@@ -135,21 +134,27 @@ const deployHandlerHelper = ( p_sProjectName ) => {
     let deployNo = null
     
     return new Promise((resolve, reject) => {
-        Jenkins.job.exists( p_sProjectName, (err, exists) => {
+        if( p_sProjectName.toLowerCase().trim() == "yourself"){
+            projectName = 'aws-deploy-build'
+            Jenkins.job.exists( projectName, (err, exists) => {
             if( exists ){
                 Jenkins.job.build( projectName, function( err, data ){
-                    if (err) speakOutput = `Sorry, an error occured while deploying the project ${projectName}.`;
+                    if (err) speakOutput = `I've talked to this jenkins guy and i think he don't like me.`;
                     deployNo = data
-                    speakOutput = `Ok, i have deployed the project ${projectName}. The build number is ${deployNo}.`;
+                    speakOutput = `Ok, i have deployed myself. Don't say thank you, I did't enjoy it. `;
                     resolve(speakOutput)
 
                 })
-            }else{
-                speakOutput = `Sorry, i couldn't find the project ${projectName}.`
-                resolve(speakOutput) 
+                }else{
+                    speakOutput = `I'm fifty thousand times more intelligent than you but even i can't find this project.`
+                    resolve(speakOutput) 
 
-            }
+                }
         })
+        }else{
+            speakOutput = `Here I am, brain the size of a planet, and they tell me to deploy a project. Call that job satisfaction? 'Cos I don't.`
+            resolve(speakOutput)
+        }
     })
         
 }

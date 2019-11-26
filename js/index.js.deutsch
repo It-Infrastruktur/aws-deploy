@@ -8,8 +8,8 @@ const LaunchRequestHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
     handle(handlerInput) {
-        const speakOutput = 'Hello! I am your Deployment Helper. How can I help you?';
-        const repromptText = 'You can ask me to deploy a project or give you the status of a build. Just say deploy or build and give me the job name'; 
+        const speakOutput = 'Hallo, ich bin dein deployment helfer. Was kann ich für dich tun?';
+        const repromptText = 'du kannst mich bitten ein projekt bereitzustellen oder den status eines Projekts abfragen.'; 
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(repromptText)
@@ -43,12 +43,12 @@ const deployHandler = {
         let speakOutput = await deployHandlerHelper( projectName )
         
         console.log( speakOutput )
-        const repromtOutput = `If you want to get the status of the build, say status ${projectName}. Or let me deploy another project for you.`
+        const repromtOutput = ``
        // const successMsg = `Thank you for waiting. The project ${projectName} was successfully deployed.`
        // const failMsg = `Sorry. The project ${projectName} failed. Please check your settings in your jenkins log for more details.` 
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            .reprompt(repromtOutput)
+            //.reprompt(repromtOutput)
             .getResponse();
     }
 }
@@ -116,7 +116,7 @@ const ErrorHandler = {
     },
     handle(handlerInput, error) {
         console.log(`~~~~ Error handled: ${error.stack}`);
-        const speakOutput = `Sorry, I had trouble doing what you asked. Please try again.`;
+        const speakOutput = `Entschuldigung, ich konnte deine Anfrage nicht richtig verstehen.`;
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -138,14 +138,14 @@ const deployHandlerHelper = ( p_sProjectName ) => {
         Jenkins.job.exists( p_sProjectName, (err, exists) => {
             if( exists ){
                 Jenkins.job.build( projectName, function( err, data ){
-                    if (err) speakOutput = `Sorry, an error occured while deploying the project ${projectName}.`;
+                    if (err) speakOutput = `Entschuldigung, bei der Abfrage des Status für den Auftrag ${projectName} ist ein Fehler aufgetreten.`;
                     deployNo = data
-                    speakOutput = `Ok, i have deployed the project ${projectName}. The build number is ${deployNo}.`;
+                    speakOutput = `ok, ich habe das projekt ${projectName} gebaut. die build nummer ist ${deployNo}.`;
                     resolve(speakOutput)
 
                 })
             }else{
-                speakOutput = `Sorry, i couldn't find the project ${projectName}.`
+                speakOutput = `Entschuldigung, ich habe das Projekt ${projectName} nicht gefunden.`
                 resolve(speakOutput) 
 
             }
@@ -163,17 +163,17 @@ const statusUpdateHelper = ( p_sProjectName ) => {
         Jenkins.job.exists( p_sProjectName, (err, exists) => {
             if( exists ){
                 Jenkins.job.get( projectName, function(err, data) {
-                    if (err) speakOutput = `Sorry, an error occured while asking for the Status of the project ${projectName}.`;
+                    if (err) speakOutput = `Entschuldigung, bei der Abfrage des Status für den Auftrag ${projectName} ist ein Fehler aufgetreten.`;
                     
                     if( data.lastBuild.number == data.lastSuccessfulBuild.number ){
-                        speakOutput = `Your last build was successful for project ${projectName}`;  
+                        speakOutput = `Dein letzter build von ${projectName} war erfolgreich.`;  
                     }else{
-                        speakOutput = `The last build of this project wasn't successfull. The last successfull build of your project was ${data.lastSuccessfulBuild.number}. `
+                        speakOutput = `Der letzte build war nicht erfolgreich. Der letzte erfolgreiche build hatte die nummer ${data.lastSuccessfulBuild.number}. `
                     }
                     resolve(speakOutput)
                 });
             }else{
-                speakOutput = `Sorry, i couldn't find the project ${projectName}.`
+                speakOutput = `Entschuldigung, ich habe das Projekt ${projectName} nicht gefunden.`
                 resolve(speakOutput) 
 
             }
